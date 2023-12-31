@@ -41,10 +41,22 @@ public class SecondaryPoiSensor extends Sensor<Villager> {
                     Block block = level.getBlockState(offset).getBlock();
                     VillagerProfession profession = villager.getVillagerData().getProfession();
 
-                    if (profession.secondaryPoi().contains(block) ||
+                    if (profession.secondaryPoi() == block ||
                             (profession.equals(VillagerProfession.FARMER) && ArrayUtils.contains(HarvestFarmland.DIRT, block))) {
                         positions.add(GlobalPos.of(dimension, offset));
                     }
+
+//                    try {
+//                        if (profession.secondaryPoi().contains(block) ||
+//                                (profession.equals(VillagerProfession.FARMER) && ArrayUtils.contains(HarvestFarmland.DIRT, block))) {
+//                            positions.add(GlobalPos.of(dimension, offset));
+//                        }
+//                    } catch (NoSuchMethodError e) {
+//                        if (profession.secondaryPoi().equals(block) ||
+//                                (profession.equals(VillagerProfession.FARMER) && ArrayUtils.contains(HarvestFarmland.DIRT, block))) {
+//                            positions.add(GlobalPos.of(dimension, offset));
+//                        }
+//                    }
                 }
             }
         }

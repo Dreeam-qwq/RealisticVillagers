@@ -64,7 +64,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.chunk.storage.RegionFile;
 import net.minecraft.world.level.storage.PrimaryLevelData;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;

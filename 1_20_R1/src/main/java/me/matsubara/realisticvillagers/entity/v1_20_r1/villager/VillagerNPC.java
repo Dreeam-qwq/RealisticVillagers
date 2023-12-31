@@ -1189,7 +1189,7 @@ public class VillagerNPC extends Villager implements IVillagerNPC, CrossbowAttac
     }
 
     @Override
-    protected SoundEvent getDeathSound() {
+    public SoundEvent getDeathSound() {
         return useVillagerSounds() ? super.getDeathSound() : SoundEvents.PLAYER_DEATH;
     }
 
