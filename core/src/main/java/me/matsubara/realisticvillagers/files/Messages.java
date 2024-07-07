@@ -63,22 +63,13 @@ public final class Messages {
     public void send(Player player, IVillagerNPC npc, @NotNull String message) {
         if (message.isEmpty()) return;
 
-        Villager.Profession profession = npc.bukkit().getProfession();
-
         String playerName = player.getName();
-        String villagerName = npc.getVillagerName();
-
-        String fullVillagerName;
-        if (npc.is(Villager.Profession.NONE) || !Config.SHOW_TITLE_IN_VILLAGER_CHAT_MESSAGE.asBool()) {
-            fullVillagerName = villagerName;
-        } else {
-            fullVillagerName = villagerName + " " + getVillagerTitle(profession);
-        }
+        String fullVillagerName = getVillagerTitleName(npc);
 
         String formattedMessage = Config.VILLAGER_MESSAGE_FORMAT.asStringTranslated()
                 .replace("%name%", fullVillagerName)
                 .replace("%message%", message)
-                .replace("%villager-name%", villagerName)
+                .replace("%villager-name%", npc.getVillagerName())
                 .replace("%player-name%", playerName)
                 .replace("%random-villager-name%", getNearbyRandom(npc, null))
                 .replace("%random-player-name%", getNearbyRandom(npc, playerName));
@@ -127,7 +118,19 @@ public final class Messages {
         }
     }
 
-    public @NotNull String getVillagerTitle(Villager.Profession profession) {
+    public String getVillagerTitleName(@NotNull IVillagerNPC npc) {
+        String villagerName = npc.getVillagerName();
+
+        if (npc.is(Villager.Profession.NONE)
+                || !Config.SHOW_TITLE_IN_VILLAGER_CHAT_MESSAGE.asBool()
+                || !(npc.bukkit() instanceof Villager villager)) {
+            return villagerName;
+        }
+
+        return villagerName + " " + getVillagerTitle(villager.getProfession());
+    }
+
+    private @NotNull String getVillagerTitle(Villager.Profession profession) {
         return Config.VILLAGER_TITLE_ARTICLE.asString() + " " + plugin.getProfessionFormatted(profession);
     }
 
@@ -256,7 +259,6 @@ public final class Messages {
         SKIN_DIFFERENT_AGE_STAGE("skin.different-age-stage"),
         SKIN_ADDED("skin.added"),
         SKIN_ERROR("skin.error"),
-        SKIN_SAME_SKIN("skin.same-skin"),
         SKIN_VILLAGER_SAME_SKIN("skin.villager-same-skin"),
         SKIN_DISGUISED("skin.disguised"),
         ONLY_FROM_PLAYER,

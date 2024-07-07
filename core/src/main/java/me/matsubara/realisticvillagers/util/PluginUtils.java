@@ -1,6 +1,5 @@
 package me.matsubara.realisticvillagers.util;
 
-import com.comphenix.protocol.utility.MinecraftVersion;
 import com.cryptomorin.xseries.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonParser;
@@ -14,13 +13,16 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Color;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Villager;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
@@ -31,6 +33,7 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.yaml.snakeyaml.parser.ParserException;
 import org.yaml.snakeyaml.scanner.ScannerException;
 
 import java.awt.*;
@@ -38,6 +41,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -80,8 +84,17 @@ public final class PluginUtils {
     private static final MethodHandle SET_PROFILE;
     private static final MethodHandle PROFILE;
 
-    public static final boolean IS_1_19_3_OR_NEW = new MinecraftVersion("1.19.3").atOrAbove();
-    public static final boolean IS_1_20_2_OR_NEW = new MinecraftVersion("1.20.2").atOrAbove();
+    private static final Class<?> CRAFT_ENTITY = ReflectionUtils.getCraftClass("entity.CraftEntity");
+
+    private static final MethodHandle getHandle = Reflection.getMethod(Objects.requireNonNull(CRAFT_ENTITY), "getHandle");
+    private static final MethodHandle absMoveTo = Reflection.getMethod(
+            ReflectionUtils.getNMSClass("world.entity", "Entity"),
+            "a",
+            MethodType.methodType(void.class, double.class, double.class, double.class, float.class, float.class),
+            false,
+            false,
+            "setLocation",
+            "absMoveTo");
 
     static {
         ROMAN_NUMERALS.put(1000, "M");
@@ -114,6 +127,13 @@ public final class PluginUtils {
 
         SET_PROFILE = Reflection.getMethod(craftMetaSkull, "setProfile", GameProfile.class);
         PROFILE = Reflection.getFieldSetter(craftMetaSkull, "profile");
+    }
+
+    public static @NotNull Vector getDirection(@NotNull BlockFace face) {
+        int modX = face.getModX(), modY = face.getModY(), modZ = face.getModZ();
+        Vector direction = new Vector(modX, modY, modZ);
+        if (modX != 0 || modY != 0 || modZ != 0) direction.normalize();
+        return direction;
     }
 
     public static @Nullable BlockFace yawToFace(float yaw, int type) {
@@ -335,7 +355,7 @@ public final class PluginUtils {
         return number == key ? value : value + toRoman(number - key);
     }
 
-    public static boolean isSteveSkin(java.awt.@NotNull Color color) {
+    public static boolean isSteveSkin(@NotNull java.awt.Color color) {
         return color.getRed() > 0 || color.getGreen() > 0 || color.getBlue() > 0;
     }
 
@@ -422,10 +442,22 @@ public final class PluginUtils {
             Logger logger = plugin.getLogger();
 
             logger.severe("An error occurred while reloading the file {" + file.getName() + "}.");
-            if (backup != null
-                    && exception instanceof InvalidConfigurationException invalid
-                    && invalid.getCause() instanceof ScannerException scanner) {
-                handleScannerError(backup, scanner.getProblemMark().getLine());
+
+            boolean errorLogged = false;
+            if (backup != null && exception instanceof InvalidConfigurationException invalid) {
+                errorLogged = true;
+
+                Throwable cause = invalid.getCause();
+                if (cause instanceof ScannerException scanner) {
+                    handleError(backup, scanner.getProblemMark().getLine());
+                } else if (cause instanceof ParserException parser) {
+                    handleError(backup, parser.getProblemMark().getLine());
+                } else {
+                    errorLogged = false;
+                }
+            }
+
+            if (errorLogged) {
                 logger.severe("The file will be restarted and a copy of the old file will be saved indicating which line had an error.");
             } else {
                 logger.severe("The file will be restarted and a copy of the old file will be saved.");
@@ -444,12 +476,12 @@ public final class PluginUtils {
         }
     }
 
-    private static void handleScannerError(@NotNull File backup, int line) {
+    private static void handleError(@NotNull File backup, int line) {
         try {
             Path path = backup.toPath();
 
             List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-            lines.set(line, lines.get(line) + " <--------------------< ERROR <--------------------<");
+            lines.set(line, lines.get(line) + " # <--------------------< ERROR <--------------------<");
 
             Files.write(path, lines, StandardCharsets.UTF_8);
         } catch (IOException exception) {
@@ -469,11 +501,15 @@ public final class PluginUtils {
                 .getAsString();
     }
 
-    public static boolean hasAnyOf(@NotNull Villager villager, NamespacedKey key) {
-        for (ItemStack item : villager.getInventory().getContents()) {
+    public static boolean hasAnyOf(@NotNull InventoryHolder holder, NamespacedKey key) {
+        for (ItemStack item : holder.getInventory().getContents()) {
             if (isItem(item, key)) return true;
         }
         return false;
+    }
+
+    public static @NotNull String getProfessionOrType(LivingEntity living) {
+        return (living instanceof Villager villager ? villager.getProfession().name() : living.getType().name()).toLowerCase().replace("_", "-");
     }
 
     public static boolean isItem(ItemStack item, NamespacedKey key) {
@@ -486,5 +522,24 @@ public final class PluginUtils {
 
     public static @NotNull String getRandomSex() {
         return ThreadLocalRandom.current().nextBoolean() ? "male" : "female";
+    }
+
+    public static void teleportWithPassengers(@NotNull LivingEntity living, Location targetLocation) {
+        if (living.teleport(targetLocation)) return;
+        if (getHandle == null || CRAFT_ENTITY == null || absMoveTo == null) return;
+
+        // We can't teleport entities with passengers with the API.
+        try {
+            Object nmsEntity = getHandle.invoke(CRAFT_ENTITY.cast(living));
+            absMoveTo.invoke(
+                    nmsEntity,
+                    targetLocation.getX(),
+                    targetLocation.getY(),
+                    targetLocation.getZ(),
+                    targetLocation.getYaw(),
+                    targetLocation.getPitch());
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
     }
 }

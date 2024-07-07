@@ -1,6 +1,7 @@
 package me.matsubara.realisticvillagers.manager;
 
 import me.matsubara.realisticvillagers.RealisticVillagers;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
 import org.bukkit.event.EventHandler;
@@ -70,9 +71,9 @@ public class InteractCooldownManager implements Listener {
         return !inCooldown;
     }
 
-    public void addCooldown(@NotNull Player player, @NotNull Villager villager, String type) {
+    public void addCooldown(@NotNull Player player, @NotNull LivingEntity living, String type) {
         long finishType = plugin.getConfig().getLong("interact-cooldown." + type, 1L) * 1000L;
-        addCooldown(player.getUniqueId(), villager.getUniqueId(), type, finishType);
+        addCooldown(player.getUniqueId(), living.getUniqueId(), type, finishType);
     }
 
     private void addCooldown(UUID playerUUID, UUID villagerUUID, String type, long finishTime) {

@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public enum Config {
+    RENDER_DISTANCE("render-distance"),
     MINESKIN_API_KEY("mineskin-api-key"),
     DISABLE_INTERACTIONS("disable-interactions"),
     MAX_GOSSIP_TOPICS("max-gossip-topics"),
@@ -32,6 +33,14 @@ public enum Config {
 
     ARROWS_PASS_THROUGH_OTHER_VILLAGERS("arrows-pass-through-other-villagers"),
     ARROW_STATUS("arrow-status"),
+
+    CUSTOM_NAME_SHOW_JOB_BLOCK("custom-nametags.show-job-block"),
+    CUSTOM_NAME_VILLAGER_LINES("custom-nametags.lines.villager"),
+    CUSTOM_NAME_TRADER_LINES("custom-nametags.lines.wandering-trader"),
+
+    SKIN_PREVIEW_SECONDS("skin-preview.seconds"),
+    SKIN_PREVIEW_MESSAGE("skin-preview.message"),
+    SKIN_PREVIEW_RAINBOW_MESSAGE("skin-preview.rainbow-message"),
 
     VILLAGER_MAX_HEALTH("villager-max-health"),
 
@@ -84,6 +93,7 @@ public enum Config {
     VILLAGER_DEFEND_FAMILY_MEMBER("villager-defend-family-member"),
     VILLAGER_DEFEND_HERO_OF_THE_VILLAGE("villager-defend-hero-of-the-village"),
     VILLAGER_DEFEND_FOLLOWING_PLAYER("villager-defend-following-player"),
+    VILLAGER_DEFEND_ATTACK_PLAYERS("villager-defend-attack-players"),
 
     REPUTATION_REQUIRED_TO_MARRY("reputation-required-to-marry"),
     REPUTATION_REQUIRED_TO_PROCREATE("reputation-required-to-procreate"),
@@ -172,7 +182,8 @@ public enum Config {
     REVIVE_BOSSBAR_COLOR("revive.boss-bar.color"),
     REVIVE_BOSSBAR_STYLE("revive.boss-bar.style"),
     REVIVE_BOSSBAR_FLAGS("revive.boss-bar.flags"),
-    TAME_HORSES("tame-horses");
+    TAME_HORSES("tame-horses"),
+    INCREASE_BABY_SCALE("increase-baby-scale");
 
     private final String path;
     private final RealisticVillagers plugin = JavaPlugin.getPlugin(RealisticVillagers.class);

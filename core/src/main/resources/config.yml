@@ -67,9 +67,12 @@
 # Effects: https://www.digminecraft.com/lists/effect_list_pc.php
 
 # Don't touch this!
-config-version: 4
+config-version: 5
 
-# In order to generate skins faster, you will need to create your own api-key on the mineskin page.
+# The rendering distance of the villagers.
+render-distance: 56
+
+# To generate skins faster, you will need to create your own api-key on the mineskin page.
 # NOTE: If empty, no api-key will be used, so it'll take longer to generate skins (NOT RECOMMENDED).
 # NOTE 2: DON'T login with your microsoft account, this is to contribute with a minecraft account to make the requests faster.
 # NOTE 3: You should only login with your google account. If you have problems, try clearing your cookies and try the steps again.
@@ -77,7 +80,7 @@ config-version: 4
 # To create an api-key, follow the steps below:
 # * Go to https://mineskin.org/account first.
 # * You must have a Google account, then click on "Continue as X".
-# * A secure connection check will be performed by cloudflare, just wait.
+# * A secure connection check will be performed by cloudflare, wait.
 # * If the page just keeps refreshing, go to https://mineskin.org/ and then do the next step, you should already be logged in.
 # * Once you've logged in, go to https://mineskin.org/account again.
 # * Under "API Keys" click on "Manage api keys".
@@ -112,11 +115,43 @@ villager-defend-family-member: true
 
 # If the villager must defend the hero of the village (only if the villager has a weapon).
 # NOTE: A player is considered the hero of the village if he has the effect HERO_OF_THE_VILLAGE or
-# if he has killed at least one raider and will receive this effect if the defense is successful.
+# if he has killed at least one raider and will receive this effect if the defence is successful.
 villager-defend-hero-of-the-village: true
 
 # If the villager must defend the following player (only if the villager has a weapon).
 villager-defend-following-player: true
+
+# Whether villagers must defend players from attacks by other players.
+# NOTE: At least one of the 3 previous options must be enabled.
+villager-defend-attack-players: false
+
+# Whether to disable player nametags.
+disable-nametags: false
+
+# Here you can modify the text displayed above the player.
+# NOTE: This function doesn't work in 1.18.2, 1.19.4 and 1.20.1 :(.
+custom-nametags:
+  # If true, a small block will be displayed above the text representing the villager's job block
+  # (except the unemployed and nitwits).
+  show-job-block: true
+  lines:
+    # %villager-name% - name of the villager.
+    # %level% - level of the villager (only for @villager).
+    # %profession% - profession of the villager (only for @villager).
+    villager:
+      - "&f%villager-name% &a(Lvl. %level%)"
+      - "&7%profession%"
+    wandering-trader:
+      - "&dWandering Trader"
+      - "&f%villager-name%"
+
+skin-preview:
+  # The seconds that the preview will last.
+  seconds: 10
+  # %remaining% - the remaining seconds of preview.
+  message: "Preview finishing in %remaining% seconds!"
+  # If true, the message will have a rainbow effect (similar to the jukebox effect when a record is playing).
+  rainbow-message: true
 
 # If true, arrows shot by villagers will pass through other villagers.
 # NOTE: This should always be true to prevent them from killing each other by accident.
@@ -331,7 +366,7 @@ variable-text:
     swamp: "Swamp"
     taiga: "Taiga"
   profession:
-    none: "None"
+    none: "Unemployed"
     armorer: "Armorer"
     butcher: "Butcher"
     cartographer: "Cartographer"
@@ -346,6 +381,7 @@ variable-text:
     shepherd: "Shepherd"
     toolsmith: "Toolsmith"
     weaponsmith: "Weaponsmith"
+    wandering-trader: "Wandering Trader"
   activity:
     play: "Play"
     work: "Work"
@@ -661,8 +697,6 @@ gui:
         display-name: "&cCombat"
         lore:
           - "&7Click to manage combat of this villager."
-        flags:
-          - HIDE_ATTRIBUTES
         only-if-allowed: false
   equipment:
     title: "%villager-name%'s inventory"
@@ -883,11 +917,6 @@ gui:
         display-name: "&bNew skin (BETA)"
         lore:
           - "&7Click to add a new skin!"
-      clear-skin:
-        material: PLAYER_HEAD
-        display-name: "&cClear skin"
-        lore:
-          - "&7Click to go back to your original skin!"
       profession:
         # %profession% - the name of the current profession.
         display-name: "&a%profession%"
@@ -908,7 +937,7 @@ gui:
           - "&7Variants: &e%generated%&7/&e%max-professions%"
           - "&8* %profession%"
           - "&7"
-          - "&7Left click to preview this skin on yourself!"
+          - "&7Left click to preview this skin!"
           - "&6Middle click to select kid skins!"
           - "&cRight click to delete this skin!"
   new-skin:
@@ -1116,9 +1145,6 @@ worlds-filter:
     - world_name_2
     - world_name_3
 
-# Whether to disable player nametags.
-disable-nametags: false
-
 # The waiting time to try to tame again (in ticks). Use 0 or lower to set no limit.
 tame-cooldown: 600
 
@@ -1128,7 +1154,7 @@ tame-cooldown: 600
 # Example: IRON_INGOT*
 #
 # You can also specify the amount of items to be picked from the inventory when looting; if not specified, only one item is picked.
-# (it must be in brackets at the end of the material/tag, but before the * (if used)).
+# (It must be in brackets at the end of the material/tag, but before the * (if used)).
 # Example: IRON_INGOT(2)*
 #
 # This uses the same system as the gifts, you can add materials, tags, and profession condition; check @gift for more information.
@@ -1448,3 +1474,9 @@ revive:
 # If true, villagers will be able to feed, tame and ride horses, donkeys and mules.
 # NOTE: This is an experimental feature, it may be removed in the future either for good or to fix bugs.
 tame-horses: false
+
+# If true, the scale of baby villagers will change to the scale of adult villagers, meaning that their hitboxes will be larger;
+# hence, baby villagers will no longer pass through 1x1 holes.
+# If false, the baby villagers will have their hitbox reduced (vanilla) but can be seen passing through 1x1 blocks, looking glitchy.
+# NOTE: This option will only take effect if @disable-skins is false.
+increase-baby-scale: true

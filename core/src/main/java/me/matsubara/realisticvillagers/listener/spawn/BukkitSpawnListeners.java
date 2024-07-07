@@ -4,11 +4,9 @@ import me.matsubara.realisticvillagers.RealisticVillagers;
 import me.matsubara.realisticvillagers.files.Config;
 import me.matsubara.realisticvillagers.nms.INMSConverter;
 import me.matsubara.realisticvillagers.tracker.VillagerTracker;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Villager;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
@@ -27,7 +25,7 @@ public class BukkitSpawnListeners implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onCreatureSpawn(@NotNull CreatureSpawnEvent event) {
         LivingEntity entity = event.getEntity();
 
@@ -44,18 +42,18 @@ public class BukkitSpawnListeners implements Listener {
                 tag);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onEntitiesLoad(@NotNull EntitiesLoadEvent event) {
         if (!event.getChunk().isLoaded()) return;
         event.getEntities().forEach(this::handleSpawn);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onWorldLoad(@NotNull WorldLoadEvent event) {
-        event.getWorld().getEntitiesByClass(Villager.class).forEach(this::handleSpawn);
+        event.getWorld().getEntitiesByClass(AbstractVillager.class).forEach(this::handleSpawn);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onChunkLoad(@NotNull ChunkLoadEvent event) {
         for (Entity entity : event.getChunk().getEntities()) {
             handleSpawn(entity);
@@ -69,12 +67,13 @@ public class BukkitSpawnListeners implements Listener {
     @SuppressWarnings({"deprecation", "OptionalGetWithoutIsPresent"})
     public void handleSpawn(Entity entity, @Nullable CreatureSpawnEvent.SpawnReason reason) {
         // Is invalid, ignore since we don't want to track those villagers.
-        if (!(entity instanceof Villager villager)) return;
+        if (!(entity instanceof AbstractVillager villager)) return;
         if (plugin.getTracker().isInvalid(villager, true)) return;
-        if (handleVillagerMarket(villager)) return;
+        if (villager instanceof Villager temp && handleVillagerMarket(temp)) return;
 
         boolean createData = reason == CreatureSpawnEvent.SpawnReason.SPAWNER_EGG
-                || reason == CreatureSpawnEvent.SpawnReason.CUSTOM;
+                || reason == CreatureSpawnEvent.SpawnReason.CUSTOM
+                || (villager.getType() == EntityType.WANDERING_TRADER && reason == CreatureSpawnEvent.SpawnReason.NATURAL);
 
         INMSConverter converter = plugin.getConverter();
         PersistentDataContainer container = villager.getPersistentDataContainer();

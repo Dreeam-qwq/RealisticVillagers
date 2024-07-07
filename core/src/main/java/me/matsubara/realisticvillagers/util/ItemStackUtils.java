@@ -3,10 +3,8 @@ package me.matsubara.realisticvillagers.util;
 import org.apache.commons.lang3.ArrayUtils;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Villager;
-import org.bukkit.inventory.EntityEquipment;
-import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.Damageable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -166,16 +164,16 @@ public final class ItemStackUtils {
         return Math.floor((6 + level * level) * typeModifier / 3);
     }
 
-    public static void setBetterWeaponInMaindHand(Villager villager, ItemStack item) {
-        setBetterWeaponInMaindHand(villager, item, true, false);
+    public static void setBetterWeaponInMaindHand(LivingEntity living, ItemStack item) {
+        setBetterWeaponInMaindHand(living, item, true, false);
     }
 
-    public static boolean setBetterWeaponInMaindHand(Villager villager, @NotNull ItemStack item, boolean addIfNotBetter, boolean canChangeType) {
+    public static boolean setBetterWeaponInMaindHand(LivingEntity living, @NotNull ItemStack item, boolean addIfNotBetter, boolean canChangeType) {
         boolean isShield = item.getType() == Material.SHIELD;
 
         if (!isWeapon(item) && !isShield) return false;
 
-        EntityEquipment equipment = villager.getEquipment();
+        EntityEquipment equipment = living.getEquipment();
         if (equipment == null) return false;
 
         // Get item in main hand.
@@ -189,15 +187,17 @@ public final class ItemStackUtils {
             }
         }
 
+        Inventory inventory = living instanceof InventoryHolder holder ? holder.getInventory() : null;
+
         // If main hand item isn't empty or is empty but picked item isn't a weapon,
         // we check if the picked item is a shield, if so, we try to put it the offhand, if already occupied, add to inventory and return.
         if (isShield) {
             // The shield always goes in offhand.
-            if (equipment.getItemInOffHand().getType().isAir() && villager.getHealth() >= 8.0d) {
+            if (equipment.getItemInOffHand().getType().isAir() && living.getHealth() >= 8.0d) {
                 equipment.setItemInOffHand(item);
             } else {
                 if (!addIfNotBetter) return false;
-                villager.getInventory().addItem(item);
+                if (inventory != null) inventory.addItem(item);
             }
             return true;
         }
@@ -207,45 +207,49 @@ public final class ItemStackUtils {
             if (!addIfNotBetter) return false;
 
             // Not of the same time, add to inventory.
-            villager.getInventory().addItem(item);
+            if (inventory != null) inventory.addItem(item);
             return true;
         } else if (isDifferentType(item, content) && canChangeType) {
-            villager.getInventory().addItem(content);
+            if (inventory != null) inventory.addItem(content);
             equipment.setItemInMainHand(item);
             return true;
         }
 
         // If both items have no enchantments, we check which one is better (based on its material).
         if (item.getEnchantments().isEmpty() && content.getEnchantments().isEmpty()) {
-            return handle(villager, item, content, (first, second) -> isAxe(item) ?
+            return handle(living, item, content, (first, second) -> isAxe(item) ?
                             isBetterAxeMaterial(first, second) :
                             isSword(second) && isBetterSwordMaterial(first, second),
                     addIfNotBetter);
         }
 
         if (isSword(item)) {
-            return handle(villager, item, content, (first, second) -> getSwordBasePoints(first) > getSwordBasePoints(second), addIfNotBetter);
+            return handle(living, item, content, (first, second) -> getSwordBasePoints(first) > getSwordBasePoints(second), addIfNotBetter);
         } else if (isAxe(item)) {
-            return handle(villager, item, content, (first, second) -> getAxeBasePoints(first) > getAxeBasePoints(second), addIfNotBetter);
+            return handle(living, item, content, (first, second) -> getAxeBasePoints(first) > getAxeBasePoints(second), addIfNotBetter);
         } else if (isRangeWeapon(item)) {
-            return handle(villager, item, content, (first, second) -> getBowBasePoints(first) > getBowBasePoints(second), addIfNotBetter);
+            return handle(living, item, content, (first, second) -> getBowBasePoints(first) > getBowBasePoints(second), addIfNotBetter);
         } else if (item.getType() == Material.TRIDENT) {
-            return handle(villager, item, content, (first, second) -> getTridentBasePoints(first) > getTridentBasePoints(second), addIfNotBetter);
+            return handle(living, item, content, (first, second) -> getTridentBasePoints(first) > getTridentBasePoints(second), addIfNotBetter);
         }
         return false;
     }
 
-    private static boolean handle(Villager villager,
+    private static boolean handle(LivingEntity living,
                                   ItemStack item,
                                   ItemStack content,
                                   @NotNull BiPredicate<ItemStack, ItemStack> predicate,
                                   boolean addIfNotBetter) {
         if (predicate.test(item, content)) {
-            villager.getInventory().addItem(content);
-            if (villager.getEquipment() != null) villager.getEquipment().setItemInMainHand(item);
+            if (living instanceof InventoryHolder holder) {
+                holder.getInventory().addItem(content);
+            }
+            if (living.getEquipment() != null) living.getEquipment().setItemInMainHand(item);
         } else {
             if (!addIfNotBetter) return false;
-            villager.getInventory().addItem(item);
+            if (living instanceof InventoryHolder holder) {
+                holder.getInventory().addItem(item);
+            }
         }
         return true;
     }
@@ -309,31 +313,33 @@ public final class ItemStackUtils {
         return points;
     }
 
-    public static void setArmorItem(Villager villager, ItemStack item) {
-        setArmorItem(villager, item, true);
+    public static void setArmorItem(LivingEntity living, ItemStack item) {
+        setArmorItem(living, item, true);
     }
 
-    public static boolean setArmorItem(Villager villager, ItemStack item, boolean addIfNotBetter) {
-        if (item == null || item.getType().isAir() || villager.getEquipment() == null) return false;
+    public static boolean setArmorItem(LivingEntity living, ItemStack item, boolean addIfNotBetter) {
+        if (item == null || item.getType().isAir() || living.getEquipment() == null) return false;
 
         // If isn't armor, return.
         EquipmentSlot slot = getSlotByItem(item);
         if (slot == null) return false;
 
-        ItemStack current = villager.getEquipment().getItem(slot);
+        Inventory inventory = living instanceof InventoryHolder holder ? holder.getInventory() : null;
+
+        ItemStack current = living.getEquipment().getItem(slot);
         if (!current.getType().isAir() && !ItemStackUtils.isBetterArmor(item, current)) {
             if (!addIfNotBetter) return false;
 
             // Isn't better than current, add to inventory.
-            villager.getInventory().addItem(item);
+            if (inventory != null) inventory.addItem(item);
             return true;
         }
 
         // Set armor item.
-        villager.getEquipment().setItem(slot, item);
+        living.getEquipment().setItem(slot, item);
 
         // Add previous to inventory.
-        villager.getInventory().addItem(current);
+        if (inventory != null) inventory.addItem(current);
 
         return true;
     }

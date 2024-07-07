@@ -5,9 +5,9 @@ import me.matsubara.realisticvillagers.data.HandleHomeResult;
 import me.matsubara.realisticvillagers.data.InteractType;
 import me.matsubara.realisticvillagers.data.LastKnownPosition;
 import me.matsubara.realisticvillagers.event.VillagerExhaustionEvent;
-import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
 import org.bukkit.inventory.ItemStack;
@@ -44,7 +44,7 @@ public interface IVillagerNPC {
 
     List<IVillagerNPC> getChildrens();
 
-    Villager bukkit();
+    LivingEntity bukkit();
 
     void addMinorPositive(UUID uuid, int amount);
 
@@ -57,8 +57,6 @@ public interface IVillagerNPC {
     void setLastProcreation(long lastProcreation);
 
     boolean canAttack();
-
-    void spawnEntityEventParticle(Particle particle);
 
     String getSex();
 
@@ -183,7 +181,11 @@ public interface IVillagerNPC {
 
     void setEquipped(boolean equipped);
 
+    boolean validShoulderEntityLeft();
+
     Object getShoulderEntityLeft();
+
+    boolean validShoulderEntityRight();
 
     Object getShoulderEntityRight();
 
@@ -198,4 +200,14 @@ public interface IVillagerNPC {
     boolean isReviving();
 
     Set<UUID> getPlayers();
+
+    byte getHandData();
+
+    int getEffectColor();
+
+    boolean getEffectAmbience();
+
+    int getBeeStingers();
+
+    void attack(LivingEntity entity);
 }

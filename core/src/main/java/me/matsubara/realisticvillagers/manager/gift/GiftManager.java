@@ -61,7 +61,7 @@ public final class GiftManager {
 
                 Villager.Profession profession = PluginUtils.getOrNull(Villager.Profession.class, data[0].toUpperCase());
                 if (profession != null) {
-                    predicate = npc -> npc.bukkit().getProfession() == profession;
+                    predicate = npc -> !(npc.bukkit() instanceof Villager villager) || villager.getProfession() == profession;
                 } else {
                     log(path, materialOrTag);
                     continue;
@@ -126,7 +126,7 @@ public final class GiftManager {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private boolean addMaterialsFromRegistry(Set<Gift> gifts, @Nullable Predicate<IVillagerNPC> predicate, String tagName, boolean inventoryLootOnly, int amount, String @NotNull ... registries) {
+    private boolean addMaterialsFromRegistry(Set<Gift> gifts, @Nullable Predicate<IVillagerNPC> predicate, String tagName, boolean inventoryLootOnly, int amount, @NotNull String... registries) {
         boolean found = false;
         for (String registry : registries) {
             Tag<Material> tag = Bukkit.getTag(registry, NamespacedKey.minecraft(tagName.toLowerCase()), Material.class);

@@ -1,13 +1,13 @@
 package me.matsubara.realisticvillagers.command;
 
-import com.comphenix.protocol.wrappers.Pair;
-import com.comphenix.protocol.wrappers.WrappedSignedProperty;
+import com.github.retrooper.packetevents.protocol.player.TextureProperty;
 import me.matsubara.realisticvillagers.RealisticVillagers;
 import me.matsubara.realisticvillagers.entity.IVillagerNPC;
 import me.matsubara.realisticvillagers.files.Config;
 import me.matsubara.realisticvillagers.files.Messages;
 import me.matsubara.realisticvillagers.gui.InteractGUI;
 import me.matsubara.realisticvillagers.gui.types.SkinGUI;
+import me.matsubara.realisticvillagers.manager.NametagManager;
 import me.matsubara.realisticvillagers.manager.revive.MonumentAnimation;
 import me.matsubara.realisticvillagers.manager.revive.ReviveManager;
 import me.matsubara.realisticvillagers.nms.INMSConverter;
@@ -15,6 +15,7 @@ import me.matsubara.realisticvillagers.tracker.VillagerTracker;
 import me.matsubara.realisticvillagers.util.ItemBuilder;
 import me.matsubara.realisticvillagers.util.PluginUtils;
 import me.matsubara.realisticvillagers.util.Shape;
+import org.apache.commons.lang3.tuple.Pair;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
@@ -22,9 +23,11 @@ import org.bukkit.command.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.AbstractHorse;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
 import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.StringUtil;
@@ -135,7 +138,7 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            WrappedSignedProperty textures = tracker.getTextures(sex, "none", id);
+            TextureProperty textures = tracker.getTextures(sex, "none", id);
             if (textures.getName().equals("error")) {
                 messages.send(sender, Messages.Message.SKIN_TEXTURE_NOT_FOUND);
                 return true;
@@ -200,6 +203,7 @@ public class MainCommand implements CommandExecutor, TabCompleter {
         boolean nametagsDisabled = Config.DISABLE_NAMETAGS.asBool();
         boolean reviveEnabled = Config.REVIVE_ENABLED.asBool();
         boolean tameHorsesEnabled = Config.TAME_HORSES.asBool();
+        boolean customNameBlockEnabled = Config.CUSTOM_NAME_SHOW_JOB_BLOCK.asBool();
 
         messages.send(sender, Messages.Message.RELOADING);
 
@@ -245,7 +249,7 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                     skinsDisabled,
                     Config.DISABLE_SKINS.asBool(),
                     (npc, state) -> {
-                        Villager bukkit = npc.bukkit();
+                        LivingEntity bukkit = npc.bukkit();
                         if (tracker.isInvalid(bukkit, true)) return;
 
                         if (state) {
@@ -257,12 +261,18 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                         }
                     });
 
+            NametagManager nametagManager = plugin.getNametagManager();
+
             handleChangedOption(
                     nametagsDisabled,
                     Config.DISABLE_NAMETAGS.asBool(),
                     (npc, state) -> {
+                        if (nametagManager != null && state) {
+                            nametagManager.remove(npc);
+                        }
+
                         // Only disable nametags if skins are enabled.
-                        Villager bukkit = npc.bukkit();
+                        LivingEntity bukkit = npc.bukkit();
                         if (!tracker.isInvalid(bukkit)) tracker.refreshNPCSkin(bukkit, false);
                     });
 
@@ -275,16 +285,26 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                         }
                     });
 
-            if (reviveEnabled == Config.REVIVE_ENABLED.asBool()) return;
+            handleChangedOption(false, true, (npc, state) -> {
+                if (nametagManager == null) return;
+                nametagManager.resetNametag(npc, null, true);
+            });
 
-            // Register or unregister listeners from revive manager depending on the status; if previously was enabled, not it's disabled.
-            if (reviveEnabled) {
-                HandlerList.unregisterAll(reviveManager);
-            } else {
-                Bukkit.getPluginManager().registerEvents(reviveManager, plugin);
+            // Register or unregister listeners depending on the status.
+            if (nametagManager != null) {
+                handleListeners(customNameBlockEnabled, Config.CUSTOM_NAME_SHOW_JOB_BLOCK.asBool(), nametagManager);
             }
+            handleListeners(reviveEnabled, Config.REVIVE_ENABLED.asBool(), reviveManager);
         }));
         return true;
+    }
+
+    private void handleListeners(boolean previous, boolean current, Listener listener) {
+        if (previous == current) return;
+
+        // if previously was enabled, not it's disabled.
+        if (previous) HandlerList.unregisterAll(listener);
+        else Bukkit.getPluginManager().registerEvents(listener, plugin);
     }
 
     private String getSex(CommandSender sender, String string) {
@@ -303,7 +323,7 @@ public class MainCommand implements CommandExecutor, TabCompleter {
         return null;
     }
 
-    private void handleForceDivorce(CommandSender sender, String @NotNull [] args) {
+    private void handleForceDivorce(CommandSender sender, @NotNull String[] args) {
         Messages messages = plugin.getMessages();
         VillagerTracker tracker = plugin.getTracker();
         INMSConverter converter = plugin.getConverter();
@@ -339,7 +359,7 @@ public class MainCommand implements CommandExecutor, TabCompleter {
         for (IVillagerNPC offlineVillager : tracker.getOfflineVillagers()) {
             if (!offlineVillager.getUniqueId().equals(partnerUUID)) continue;
 
-            Villager bukkit = offlineVillager.bukkit();
+            LivingEntity bukkit = offlineVillager.bukkit();
             if (bukkit == null) {
                 bukkit = plugin.getUnloadedOffline(offlineVillager);
                 if (bukkit == null) continue;
@@ -364,7 +384,7 @@ public class MainCommand implements CommandExecutor, TabCompleter {
         return getItemCommand(sender, args, itemGetter, shape.getResult());
     }
 
-    private boolean getItemCommand(CommandSender sender, String @NotNull [] args, String itemGetter, ItemStack item) {
+    private boolean getItemCommand(CommandSender sender, @NotNull String[] args, String itemGetter, ItemStack item) {
         if (!args[0].equalsIgnoreCase(itemGetter)) return false;
 
         boolean isOther = args.length > 1;
@@ -398,7 +418,7 @@ public class MainCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
-        if (!command.getName().equalsIgnoreCase("realisticvillagers")) return null;
+        if (!sender.hasPermission("realisticvillagers.help")) return Collections.emptyList();
 
         if (args.length == 1) {
             return StringUtil.copyPartialMatches(args[0], COMMAND_ARGS, new ArrayList<>());
@@ -452,7 +472,7 @@ public class MainCommand implements CommandExecutor, TabCompleter {
         int skins = (InteractGUI.getValidSize(plugin, "skin", 36) / 9 - 3) * 7;
 
         Pair<File, FileConfiguration> pair = plugin.getTracker().getFile(sex + ".yml");
-        FileConfiguration config = pair.getSecond();
+        FileConfiguration config = pair.getValue();
 
         ConfigurationSection section = config.getConfigurationSection("none");
         if (section == null) return -1;
