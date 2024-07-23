@@ -24,7 +24,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import org.bukkit.craftbukkit.v1_20_R4.entity.CraftWolf;
+import org.bukkit.craftbukkit.entity.CraftWolf;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +105,7 @@ public class PetWolf extends Wolf implements Pet {
     }
 
     @Override
-    public CraftWolf getBukkitEntity() {
+    public @NotNull CraftWolf getBukkitEntity() {
         return (CraftWolf) super.getBukkitEntity();
     }
 

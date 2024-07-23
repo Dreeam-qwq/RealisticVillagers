@@ -450,7 +450,7 @@ public class WanderingTraderNPC extends WanderingTrader implements IVillagerNPC,
     }
 
     @Override
-    protected SoundEvent getDeathSound() {
+    public SoundEvent getDeathSound() {
         return useVillagerSounds() ? super.getDeathSound() : SoundEvents.PLAYER_DEATH;
     }
 

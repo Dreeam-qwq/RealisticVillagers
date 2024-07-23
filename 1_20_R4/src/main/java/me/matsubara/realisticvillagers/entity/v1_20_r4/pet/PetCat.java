@@ -40,7 +40,7 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.v1_20_R4.entity.CraftCat;
+import org.bukkit.craftbukkit.entity.CraftCat;
 import org.bukkit.event.entity.EntityDropItemEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -141,15 +141,15 @@ public class PetCat extends Cat implements Pet {
     }
 
     @Override
-    public CraftCat getBukkitEntity() {
+    public @NotNull CraftCat getBukkitEntity() {
         return (CraftCat) super.getBukkitEntity();
     }
 
-    private void setRelaxStateOne(boolean flag) {
+    public void setRelaxStateOne(boolean flag) {
         entityData.set(RELAX_STATE_ONE, flag);
     }
 
-    private boolean isRelaxStateOne() {
+    public boolean isRelaxStateOne() {
         return entityData.get(RELAX_STATE_ONE);
     }
 

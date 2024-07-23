@@ -154,7 +154,7 @@ public class DummyFishingHook extends FishingHook {
     }
 
     @Override
-    protected boolean canHitEntity(@NotNull Entity entity) {
+    public boolean canHitEntity(@NotNull Entity entity) {
         boolean item = entity.isAlive() && entity instanceof ItemEntity;
         if (entity.isSpectator() || !entity.isAlive() || !entity.isPickable()) return item;
 
@@ -426,7 +426,7 @@ public class DummyFishingHook extends FishingHook {
         preHitTargetOrDeflectSelf(result);
     }
 
-    private boolean calculateOpenWater(BlockPos pos) {
+    public boolean calculateOpenWater(BlockPos pos) {
         OpenWaterType type = OpenWaterType.INVALID;
 
         for (int i = -1; i <= 2; ++i) {

@@ -45,18 +45,6 @@ public class SecondaryPoiSensor extends Sensor<Villager> {
                             (profession.equals(VillagerProfession.FARMER) && ArrayUtils.contains(HarvestFarmland.DIRT, block))) {
                         positions.add(GlobalPos.of(dimension, offset));
                     }
-
-//                    try {
-//                        if (profession.secondaryPoi().contains(block) ||
-//                                (profession.equals(VillagerProfession.FARMER) && ArrayUtils.contains(HarvestFarmland.DIRT, block))) {
-//                            positions.add(GlobalPos.of(dimension, offset));
-//                        }
-//                    } catch (NoSuchMethodError e) {
-//                        if (profession.secondaryPoi().equals(block) ||
-//                                (profession.equals(VillagerProfession.FARMER) && ArrayUtils.contains(HarvestFarmland.DIRT, block))) {
-//                            positions.add(GlobalPos.of(dimension, offset));
-//                        }
-//                    }
                 }
             }
         }

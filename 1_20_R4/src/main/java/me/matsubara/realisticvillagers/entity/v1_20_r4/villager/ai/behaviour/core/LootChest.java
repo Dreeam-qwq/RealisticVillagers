@@ -30,11 +30,12 @@ import org.bukkit.SoundCategory;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
+import org.bukkit.block.Container;
 import org.bukkit.block.Sign;
 import org.bukkit.block.sign.Side;
-import org.bukkit.craftbukkit.v1_20_R4.block.CraftBlock;
-import org.bukkit.craftbukkit.v1_20_R4.block.CraftChest;
-import org.bukkit.craftbukkit.v1_20_R4.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.block.CraftBlock;
+import org.bukkit.craftbukkit.block.CraftChest;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -170,7 +171,7 @@ public class LootChest extends Behavior<Villager> implements Exchangeable {
 
     @Override
     public void tick(ServerLevel level, @NotNull Villager villager, long time) {
-        BlockPos pos = ((CraftChest) chest).getPosition();
+        BlockPos pos = ((CraftBlock) chest).getPosition();
         if (chest.getLocation().distance(villager.getBukkitEntity().getLocation()) > 3 || !(villager instanceof VillagerNPC npc)) {
             BehaviorUtils.setWalkAndLookTargetMemories(villager, pos, VillagerNPC.WALK_SPEED.get(), 1);
             return;
@@ -329,7 +330,7 @@ public class LootChest extends Behavior<Villager> implements Exchangeable {
 
         for (ServerPlayer player : level.players()) {
             player.connection.send(new ClientboundBlockEventPacket(
-                    ((CraftChest) chest).getPosition(),
+                    ((CraftBlock) chest).getPosition(),
                     Blocks.CHEST,
                     1,
                     open ? 1 : 0));
